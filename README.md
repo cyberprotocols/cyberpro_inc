@@ -6,34 +6,55 @@ The files in this repository were used to configure the network depicted below.
 
 These files have been tested and used to generate a live ELK deployment on Azure. They can be used to either recreate the entire deployment pictured above. Alternatively, select portions of the filebeat-playbook.yml file may be used to install only certain pieces of it, such as Filebeat.
 
- ---
-- name: installing and launching filebeat
-  hosts: web-servers
-  become: yes
+---
+- name: Configure Elk VM with Docker
+  hosts: elk
+  remote_user: sysadmin
+  become: true
   tasks:
+    # Use apt module
+    - name: Install docker.io
+      apt:
+        update_cache: yes
+        name: docker.io
+        state: present
 
-  - name: download filebeat deb
-    command: curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.4.0-amd64.deb
- 
-  - name: install filebeat deb
-    command: dpkg -i filebeat-7.4.0-amd64.deb
+      # Use apt module
+    - name: Install pip3
+      apt:
+        force_apt_get: yes
+        name: python3-pip
+        state: present
 
-  - name: drop in filebeat.yml 
-    copy:
-      src: /etc/ansible/filebeat-config.yml
-      dest: /etc/filebeat/filebeat.yml
+      # Use pip module
+    - name: Install Docker python module
+      pip:
+        name: docker
+        state: present
 
-  - name: enable and configure system module
-    command: filebeat modules enable system
+      # Use sysctl module
+    - name: Use more memory
+      sysctl:
+        name: vm.max_map_count
+        value: "262144"
+        state: present
+        reload: yes
 
-  - name: setup filebeat
-    command: filebeat setup
-
-  - name: start filebeat service
+      # Use docker_container module
+    - name: download and launch a docker elk container
+      docker_container:
+        name: elk
+        image: sebp/elk:761
+        state: started
+        restart_policy: always
+        published_ports:
+          - "5601:5601"
+          - "9200:9200"
+          - "5044:5044"
     command: service filebeat start
 
 This document contains the following details:
-- Description of the Topologu
+- Description of the Topology
 - Access Policies
 - ELK Configuration
   - Beats in Use
@@ -45,18 +66,18 @@ This document contains the following details:
 
 The main purpose of this network is to expose a load-balanced and monitored instance of DVWA, the D*mn Vulnerable Web Application.
 
-Load balancing ensures that the application will be highly availability and reliability, in addition to restricting unwanted traffic to the network.
--Load Balancers by offering off-loading function defending an organization against distributed denial-of-service (DDoS) attacks. 
+Load balancing ensures that the application will be highly available and redundent, in addition to restricting unwanted traffic to the network.
+-Load Balancers offers off-loading function defending an organization against distributed denial-of-service (DDoS) attacks. 
 -Software load balancers with cloud offload provide efficient perimeter firewall functionalities at an efficient and cost effictive solution. 
 
 -A JumpBox server is a hardened and monitored device that spans two dissimilar security zones and provides a controlled means of access between them. 
--The jump server acts as a single audit point for traffic and also a single place where user accounts can be managed. 
+-The JumpBox server acts as a single audit point for traffic and also a single place where user accounts can be managed. 
 -It streamlines maitainance since its maintained on a single system. Therefore, when an update to the SAN management software is available, only one single 
 system is requiered. 
 
-Integrating an ELK server allows users to easily monitor the vulnerable VMs for changes to the system logging and system _____.
+Integrating an ELK server allows users to easily monitor the vulnerable VMs for changes to the system logging and system Services.
 - Filebeat is a lightweight shipper that forwards and centralizes log data. 
-- Filebeat inputs looks in ht elocation you've specified for log data. For each log that filebeat locates, filebeat starts a harvester. 
+- Filebeat inputs looks in the location you've specified for log data. For each log that filebeat locates, filebeat starts a harvester. 
 - Metricbeat is a lightweight shipper that is install on the elk server to collect metrics from the OS and from services running on the server.
 - Metricbeat takes the metrics and statistics that it collects and ships them out to the output that yoou specify, such as Elasticsearch or logstash.
 
@@ -82,8 +103,8 @@ A summary of the access policies in place can be found in the table below.
 
 | Name     | Publicly Accessible | Allowed IP Addresses |
 |----------|---------------------|----------------------|
-| Jump Box | Yes                 | 13.82.149.52 98.252.34.13  |
-| elkserver| yes                 | 10.1.0.4             |
+| Jump Box | Yes                 | 98.252.34.13 13.82.149.52         |
+| elkserver| yes                 | 10.0.0.4             |
 |          |                     |                      |
 
 ### Elk Configuration
@@ -91,9 +112,9 @@ A summary of the access policies in place can be found in the table below.
 Ansible was used to automate configuration of the ELK machine. No configuration was performed manually, which is advantageous because
 It's a free open source tool that is simple to set up and use. It's poweful yet flexible way to model and automate complex IT workflows.
  
-In this case ansible allowed us to easily deploy our elk machine with out the need to write custom code, all by listing the tasks required
-to be done by just writing a playbook, ansible was able to figure our how to get the system to the state we wanted to be in. This can be
-very easily repeated with the ansible playbook. Allowing constant and congruent deployment.\
+In this case ansible allowed us to easily deploy our elk machine without the need to write custom code, all by listing the tasks required
+to be done by just writing a playbook. Ansible was able to figure our how to get the system to the state we wanted to be in. This can be
+very easily repeated with the ansible playbook. Allowing constant and congruent deployment.
 
 The playbook implements the following tasks:
 - Set the vm.max_count to 262144 *This configures the machine being configured to use more memory.
@@ -113,7 +134,7 @@ restarted.
 
 The following screenshot displays the result of running `docker ps` after successfully configuring the ELK instance.
 
-![TODO: Update the path with the name of your screenshot of docker ps output](Images/docker_ps_output.png)
+/c/Users/pefun/Documents/cyberpro_inc/Ansible/docker_ps_screenshot.png
 
 ### Target Machines & Beats
 This ELK server is configured to monitor the following machines:
@@ -157,10 +178,10 @@ C scroll to the bottom and click on verify data.
 D if the ELK stack was successfully receiving logs, you would have seen:
 ‘data successfully received from this module.  
 
-- We have several playbooks. Filebeat-playbook and metricbeat-playbook. They are located in /etc/ansible
+- Filebeat-playbook. They are located in /etc/filebeat/filebeat.yml
 
 - To run Ansible in a specific machine, we need to edit the host file first and create a specific group. To install ELK in a specific machine, edit the install-elk.yml file. Under host specify the elk server that was created in the host file. This will prevent the elk server installation in unwanted machines. Likewise in the filebeat-playbook.yml file, under the hosts: specify the targeted hosts, which was created in the hosts file. 
 
-- To check that the ELK server is running open your browser and navigate to http://13.83.48.12:5601/
+- To check that the ELK server is running open your browser and navigate to http://13.83.48.12:5601//app/kibana. 
 
 
