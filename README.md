@@ -88,7 +88,7 @@ restarted.
 
 The following screenshot displays the result of running `docker ps` after successfully configuring the ELK instance.
 
-![Screenshot](docker_ps_screenshot.png)
+![alt text](https://github.com/cyberprotocols/cyberpro_inc/blob/main/Ansible/docker_ps_screenshot.png)
 
 ### Target Machines & Beats
 This ELK server is configured to monitor the following machines:
